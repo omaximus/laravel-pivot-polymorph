@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Database;
+namespace Pisochek\PivotPolymorph\Relations;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphPivot;

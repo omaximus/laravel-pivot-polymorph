@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Database;
+namespace Pisochek\PivotPolymorph\Concerns;
 
 use Illuminate\Database\Eloquent\Concerns\HasRelationships as IlluminateHasRelationships;
 use Illuminate\Support\Str;
+use Pisochek\PivotPolymorph\Relations\MorphsTo;
+use Pisochek\PivotPolymorph\Relations\MorphsToMany;
 
 trait HasRelationships
 {
@@ -22,7 +24,7 @@ trait HasRelationships
      * @param null $foreign
      * @param null $oForeign
      *
-     * @return \App\Database\MorphsTo
+     * @return \Pisochek\PivotPolymorph\Relations\MorphsTo
      */
     public function morphsTo(
         $name, $oName, $table, $type = null, $oType = null, $id = null, $oId = null, $foreign = null, $oForeign = null
@@ -50,7 +52,7 @@ trait HasRelationships
      * @param null $foreign
      * @param null $oForeign
      *
-     * @return \App\Database\MorphsToMany
+     * @return \Pisochek\PivotPolymorph\Relations\MorphsToMany
      */
     public function morphsToMany(
         $related, $name, $oName, $table, $type = null, $oType = null, $id = null, $oId = null, $foreign = null,
