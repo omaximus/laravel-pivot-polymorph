@@ -1,8 +1,8 @@
-#Polymorphic relations for eloquent.
+# Polymorphic relations for eloquent.
 
 This package supports fully morph many-to-many relation.
 
-##Usage
+## Usage
 
 Include trait `\Pisochek\PivotPolymorph\Concerns\HasRelationships` to model.
  Then like any other relation, write, for example:
