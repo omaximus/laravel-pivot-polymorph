@@ -15,26 +15,29 @@ trait HasRelationships
      * Define fully polymorphic relation
      *
      * @param $name
-     * @param $oName
+     * @param $relatedName
      * @param $table
      * @param null $type
-     * @param null $oType
-     * @param null $id
-     * @param null $oId
-     * @param null $foreign
-     * @param null $oForeign
+     * @param null $relatedType
+     * @param null $foreignPivotKey
+     * @param null $relatedPivotKey
+     * @param null $parentKey
+     * @param null $relatedKey
      *
      * @return \Pisochek\PivotPolymorph\Relations\MorphsTo
      */
     public function morphsTo(
-        $name, $oName, $table, $type = null, $oType = null, $id = null, $oId = null, $foreign = null, $oForeign = null
+        $name, $relatedName, $table, $foreignPivotKey = null, $relatedPivotKey = null,
+        $parentKey = null, $type = null, $relatedType = null, $relatedKey = null
     ) {
-        list($oType, $oId) = $this->getMorphs(Str::snake($oName), $oType, $oId);
-        list($type, $id) = $this->getMorphs(Str::snake($name), $type, $id);
+        list($relatedType, $relatedPivotKey) = $this->getMorphs(
+            Str::snake($relatedName), $relatedType, $relatedPivotKey
+        );
+        list($type, $foreignPivotKey) = $this->getMorphs(Str::snake($name), $type, $foreignPivotKey);
 
         return new MorphsTo(
-            $this, $name, $oName, $table, $id, $oId, $type, $oType, $foreign ?: $this->getKeyName(),
-            $oForeign ?: 'id'
+            $this, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type, $relatedType,
+            $parentKey ?: $this->getKeyName(), $relatedKey ?: 'id'
         );
     }
 
@@ -43,31 +46,33 @@ trait HasRelationships
      *
      * @param string $related
      * @param string $name
-     * @param string $oName
+     * @param string $relatedName
      * @param string $table
      * @param string|null $type
-     * @param string|null $oType
-     * @param string|null $id
-     * @param string|null $oId
-     * @param null $foreign
-     * @param null $oForeign
+     * @param string|null $relatedType
+     * @param string|null $foreignPivotKey
+     * @param string|null $relatedPivotKey
+     * @param null $parentKey
+     * @param null $relatedKey
      *
      * @return \Pisochek\PivotPolymorph\Relations\MorphsToMany
      */
     public function morphsToMany(
-        $related, $name, $oName, $table, $type = null, $oType = null, $id = null, $oId = null, $foreign = null,
-        $oForeign = null
+        $related, $name, $relatedName, $table, $foreignPivotKey = null, $relatedPivotKey = null, $type = null,
+        $relatedType = null, $parentKey = null, $relatedKey = null
     ) {
-        list($type, $id) = $this->getMorphs(Str::snake($name), $type, $id);
-        list($oType, $oId) = $this->getMorphs(Str::snake($oName), $oType, $oId);
+        list($type, $foreignPivotKey) = $this->getMorphs(Str::snake($name), $type, $foreignPivotKey);
+        list($relatedType, $relatedPivotKey) = $this->getMorphs(
+            Str::snake($relatedName), $relatedType, $relatedPivotKey
+        );
 
         $instance = $this->newRelatedInstance($related);
 
-        $table = $table ?: (Str::plural($name) . '_' . Str::plural($oName));
+        $table = $table ?: (Str::plural($name) . '_' . Str::plural($relatedName));
 
         return new MorphsToMany(
-            $instance->newQuery(), $this, $name, $oName, $table, $id, $oId, $type, $oType,
-            $foreign ?: $this->getKeyName(), $oForeign ?: $instance->getKeyName()
+            $instance->newQuery(), $this, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type,
+            $relatedType, $parentKey ?: $this->getKeyName(), $relatedKey ?: $instance->getKeyName()
         );
     }
 
