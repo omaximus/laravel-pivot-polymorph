@@ -38,7 +38,7 @@ class MorphsTo extends MorphToMany
         Model $parent, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey,
         $type, $relatedType, $parentKey, $relatedKey
     ) {
-        $query = new Builder(new BaseBuilder($this->connection, $this->grammar, $this->processor));
+        $query = new Builder(new BaseBuilder($parent->getConnection()));
 
         parent::__construct(
             $query, $parent, $name, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey
