@@ -4,6 +4,7 @@ namespace Pisochek\PivotPolymorph\Concerns;
 
 use Illuminate\Database\Eloquent\Concerns\HasRelationships as IlluminateHasRelationships;
 use Illuminate\Support\Str;
+use Pisochek\PivotPolymorph\Relations\MorphsOne;
 use Pisochek\PivotPolymorph\Relations\MorphsTo;
 use Pisochek\PivotPolymorph\Relations\MorphsToMany;
 
@@ -74,10 +75,5 @@ trait HasRelationships
             $instance->newQuery(), $this, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type,
             $relatedType, $parentKey ?: $this->getKeyName(), $relatedKey ?: $instance->getKeyName()
         );
-    }
-
-    public function morphsOne()
-    {
-        // TODO: implement
     }
 }
