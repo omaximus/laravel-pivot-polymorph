@@ -9,13 +9,28 @@ trait HasRelationships
 {
     use IlluminateHasRelationships;
 
-    public function morphsToMany(
+    /**
+     * Define fully polymorphic relation
+     *
+     * @param $name
+     * @param $oName
+     * @param $table
+     * @param null $type
+     * @param null $oType
+     * @param null $id
+     * @param null $oId
+     * @param null $foreign
+     * @param null $oForeign
+     *
+     * @return \App\Database\MorphsTo
+     */
+    public function morphsTo(
         $name, $oName, $table, $type = null, $oType = null, $id = null, $oId = null, $foreign = null, $oForeign = null
     ) {
         list($oType, $oId) = $this->getMorphs(Str::snake($oName), $oType, $oId);
         list($type, $id) = $this->getMorphs(Str::snake($name), $type, $id);
 
-        return new MorphsToMany(
+        return new MorphsTo(
             $this, $name, $oName, $table, $id, $oId, $type, $oType, $foreign ?: $this->getKeyName(),
             $oForeign ?: 'id'
         );
@@ -32,12 +47,12 @@ trait HasRelationships
      * @param string|null $oType
      * @param string|null $id
      * @param string|null $oId
-     *
      * @param null $foreign
      * @param null $oForeign
-     * @return \App\Database\MorphToManyThrough
+     *
+     * @return \App\Database\MorphsToMany
      */
-    public function morphToManyThrough(
+    public function morphsToMany(
         $related, $name, $oName, $table, $type = null, $oType = null, $id = null, $oId = null, $foreign = null,
         $oForeign = null
     ) {
@@ -48,9 +63,14 @@ trait HasRelationships
 
         $table = $table ?: (Str::plural($name) . '_' . Str::plural($oName));
 
-        return new MorphToManyThrough(
+        return new MorphsToMany(
             $instance->newQuery(), $this, $name, $oName, $table, $id, $oId, $type, $oType,
             $foreign ?: $this->getKeyName(), $oForeign ?: $instance->getKeyName()
         );
+    }
+
+    public function morphsOne()
+    {
+        // TODO: implement
     }
 }

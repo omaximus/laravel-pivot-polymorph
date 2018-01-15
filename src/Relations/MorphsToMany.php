@@ -7,21 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Arr;
 
-class MorphToManyThrough extends MorphToMany
+class MorphsToMany extends MorphToMany
 {
     /**
      * The type of the related polymorphic relation.
      *
      * @var string
      */
-    protected $oMorphType;
+    protected $relatedMorphType;
 
     /**
      * The class name of the related morph type constraint.
      *
      * @var string
      */
-    protected $oMorphClass;
+    protected $relatedMorphClass;
 
     /**
      * Create a new morph to many relationship instance.
@@ -29,107 +29,91 @@ class MorphToManyThrough extends MorphToMany
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param \Illuminate\Database\Eloquent\Model $parent
      * @param string $name
-     * @param string $oName
+     * @param string $relatedName
      * @param string $table
      * @param string $type
-     * @param string $oType
-     * @param string $id
-     * @param string $oId
-     * @param bool $foreign
-     * @param $oForeign
+     * @param string $relatedType
+     * @param string $foreignPivotKey
+     * @param string $relatedPivotKey
+     * @param bool $parentKey
+     * @param $relatedKey
      * @internal param string $relatedPivotKey
      * @internal param string $foreignPivotKey
      */
     public function __construct(
-        Builder $query, Model $parent, $name, $oName, $table, $id, $oId, $type, $oType, $foreign, $oForeign
+        Builder $query, Model $parent, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type,
+        $relatedType, $parentKey, $relatedKey
     ) {
-        $this->oMorphType = $oType;
-        $this->oMorphClass = $query->getModel()->getMorphClass();
-        parent::__construct($query, $parent, $name, $table, $id, $oId, $foreign, $oForeign, null, false);
+        $this->relatedMorphType = $relatedType;
+        $this->relatedMorphClass = $query->getModel()->getMorphClass();
+
+        parent::__construct(
+            $query, $parent, $name, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey, null, false
+        );
     }
 
     /**
-     * Set the where clause for the relation query.
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     protected function addWhereConstraints()
     {
         parent::addWhereConstraints();
 
-        $this->query->where($this->table . '.' . $this->oMorphType, $this->oMorphClass);
+        $this->query->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
 
         return $this;
     }
 
     /**
-     * Set the constraints for an eager load of the relation.
-     *
-     * @param  array  $models
-     * @return void
+     * {@inheritdoc}
      */
     public function addEagerConstraints(array $models)
     {
         parent::addEagerConstraints($models);
 
-        $this->query->where($this->table . '.' . $this->oMorphType, $this->oMorphClass);
+        $this->query->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
     }
 
     /**
-     * Create a new pivot attachment record.
-     *
-     * @param  int   $id
-     * @param  bool  $timed
-     * @return array
+     * {@inheritdoc}
      */
     protected function baseAttachRecord($id, $timed)
     {
         return Arr::add(
-            parent::baseAttachRecord($id, $timed), $this->oMorphType, $this->oMorphClass
+            parent::baseAttachRecord($id, $timed), $this->relatedMorphType, $this->relatedMorphClass
         );
     }
 
     /**
-     * Add the constraints for a relationship count query.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  \Illuminate\Database\Eloquent\Builder  $parentQuery
-     * @param  array|mixed  $columns
-     * @return \Illuminate\Database\Eloquent\Builder
+     * {@inheritdoc}
      */
     public function getRelationExistenceQuery(Builder $query, Builder $parentQuery, $columns = ['*'])
     {
         return parent::getRelationExistenceQuery($query, $parentQuery, $columns)
-                     ->where($this->table . '.' . $this->oMorphType, $this->oMorphClass);
+                     ->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
     }
 
     /**
-     * Create a new query builder for the pivot table.
-     *
-     * @return \Illuminate\Database\Query\Builder
+     * {@inheritdoc}
      */
     protected function newPivotQuery()
     {
-        return parent::newPivotQuery()->where($this->table . '.' . $this->oMorphType, $this->oMorphClass);
+        return parent::newPivotQuery()->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
     }
 
     /**
-     * Create a new pivot model instance.
-     *
-     * @param  array  $attributes
-     * @param  bool   $exists
-     * @return \Illuminate\Database\Eloquent\Relations\Pivot
+     * {@inheritdoc}
      */
     public function newPivot(array $attributes = [], $exists = false)
     {
         $using = $this->using;
 
         $pivot = $using ? $using::fromRawAttributes($this->parent, $attributes, $this->table, $exists)
-            : MorphThroughPivot::fromAttributes($this->parent, $attributes, $this->table, $exists);
+            : MorphsToManyPivot::fromAttributes($this->parent, $attributes, $this->table, $exists);
 
         $pivot->setPivotKeys($this->foreignPivotKey, $this->relatedPivotKey)
-              ->setOtherMorphType($this->oMorphType)
-              ->setOtherMorphClass($this->oMorphClass)
+              ->setOtherMorphType($this->relatedMorphType)
+              ->setOtherMorphClass($this->relatedMorphClass)
               ->setMorphType($this->morphType)
               ->setMorphClass($this->morphClass);
 
@@ -143,7 +127,7 @@ class MorphToManyThrough extends MorphToMany
      */
     public function getOtherMorphType()
     {
-        return $this->oMorphType;
+        return $this->relatedMorphType;
     }
 
     /**
@@ -153,6 +137,6 @@ class MorphToManyThrough extends MorphToMany
      */
     public function getOtherMorphClass()
     {
-        return $this->oMorphClass;
+        return $this->relatedMorphClass;
     }
 }

@@ -5,7 +5,7 @@ namespace App\Database;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphPivot;
 
-class MorphThroughPivot extends MorphPivot
+class MorphsToManyPivot extends MorphPivot
 {
     /**
      * The type of the polymorphic relation.
@@ -14,7 +14,7 @@ class MorphThroughPivot extends MorphPivot
      *
      * @var string
      */
-    protected $oMorphType;
+    protected $relatedMorphType;
 
     /**
      * The value of the polymorphic relation.
@@ -23,31 +23,26 @@ class MorphThroughPivot extends MorphPivot
      *
      * @var string
      */
-    protected $oMorphClass;
+    protected $relatedMorphClass;
 
     /**
-     * Set the keys for a save update query.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * {@inheritdoc}
      */
     protected function setKeysForSaveQuery(Builder $query)
     {
-        $query->where($this->oMorphType, $this->oMorphClass);
+        $query->where($this->relatedMorphType, $this->relatedMorphClass);
 
         return parent::setKeysForSaveQuery($query);
     }
 
     /**
-     * Delete the pivot model record from the database.
-     *
-     * @return int
+     * {@inheritdoc}
      */
     public function delete()
     {
         $query = $this->getDeleteQuery();
 
-        $query->where($this->oMorphType, $this->oMorphClass);
+        $query->where($this->relatedMorphType, $this->relatedMorphClass);
 
         return $query->delete();
     }
@@ -60,7 +55,7 @@ class MorphThroughPivot extends MorphPivot
      */
     public function setOtherMorphType($morphType)
     {
-        $this->oMorphType = $morphType;
+        $this->relatedMorphType = $morphType;
 
         return $this;
     }
@@ -73,7 +68,7 @@ class MorphThroughPivot extends MorphPivot
      */
     public function setOtherMorphClass($morphClass)
     {
-        $this->oMorphClass = $morphClass;
+        $this->relatedMorphClass = $morphClass;
 
         return $this;
     }

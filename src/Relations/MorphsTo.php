@@ -6,79 +6,76 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Query\Builder as BaseBuilder;
 use Illuminate\Support\Collection as BaseCollection;
 
-class MorphsToMany extends MorphToMany
+class MorphsTo extends MorphToMany
 {
-    protected $morphId;
-
-    protected $oMorphId;
-
     /**
      * The type of the related polymorphic relation.
      *
      * @var string
      */
-    protected $oMorphType;
+    protected $relatedMorphType;
 
     /**
      * Create a new morph to many relationship instance.
      *
      * @param \Illuminate\Database\Eloquent\Model $parent
      * @param string $name
-     * @param string $oName
+     * @param string $relatedName
      * @param string $table
-     * @param string $id
-     * @param string $oId
+     * @param string $foreignPivotKey
+     * @param string $relatedPivotKey
      * @param string $type
-     * @param null|string $oType
-     * @param string $foreign
-     * @param string $oForeign
+     * @param null|string $relatedType
+     * @param string $parentKey
+     * @param string $relatedKey
      * @internal param string $relatedPivotKey
      * @internal param string $foreignPivotKey
      */
     public function __construct(
-        Model $parent, $name, $oName, $table, $id, $oId,
-        $type, $oType, $foreign, $oForeign
+        Model $parent, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey,
+        $type, $relatedType, $parentKey, $relatedKey
     ) {
-        parent::__construct(new Builder(\DB::query()), $parent, $name, $table, $id, $oId, $foreign, $oForeign);
+        $query = new Builder(new BaseBuilder($this->connection, $this->grammar, $this->processor));
 
-        $this->morphId = $id;
-        $this->oMorphId = $oId;
-        $this->oMorphType = $oType;
-        $this->pivotColumns = [$id, $oId, $type, $oType];
+        parent::__construct(
+            $query, $parent, $name, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey
+        );
+
+        $this->relatedMorphType = $relatedType;
+        $this->pivotColumns = [$foreignPivotKey, $relatedPivotKey, $type, $relatedType];
     }
 
     /**
-     * Set the join clause for the relation query.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder|null  $query
-     * @return $this
+     * {@inheritdoc}
      */
     protected function performJoin($query = null)
     {
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function shouldSelect(array $columns = ['*'])
     {
         return $this->pivotColumns;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function get($columns = ['*'])
     {
-        // First we'll add the proper select columns onto the query so it is run with
-        // the proper columns. Then, we will get the results and hydrate out pivot
-        // models with the result of those columns as a separate model relation.
         $columns = $this->query->getQuery()->columns ? [] : $columns;
-
         $builder = $this->query->applyScopes();
-
         $results = $builder->addSelect($this->shouldSelect($columns))
                            ->getQuery()
                            ->from($this->table)
                            ->get()
-                           ->groupBy($this->oMorphType);
+                           ->groupBy($this->relatedMorphType);
 
         $models = [];
 
@@ -90,9 +87,6 @@ class MorphsToMany extends MorphToMany
 
         $this->hydratePivotRelation($models);
 
-        // If we actually found models we will also eager load any relationships that
-        // have been specified as needing to be eager loaded. This will solve the
-        // n + 1 query problem for the developer and also increase performance.
         if (count($models) > 0) {
             $models = $builder->eagerLoadRelations($models);
         }
@@ -100,6 +94,9 @@ class MorphsToMany extends MorphToMany
         return new BaseCollection($models);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function parseIds($value)
     {
         if ($value instanceof Model) {
@@ -131,6 +128,9 @@ class MorphsToMany extends MorphToMany
         return $value;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function sync($ids, $detaching = true)
     {
         $changes = ['attached' => [], 'detached' => [], 'updated' => []];
@@ -150,7 +150,7 @@ class MorphsToMany extends MorphToMany
             foreach ($current as $key => $item) {
 
                 // If this record exists - update it, go out of the loop and mark it as not new
-                if ($item->{$this->oMorphId} === $id && $item->{$this->oMorphType} === $class) {
+                if ($item->{$this->relatedPivotKey} === $id && $item->{$this->relatedMorphType} === $class) {
                     if (count($attributes) > 0 &&
                         $this->updateExistingMorphPivot($id, $class, $attributes)) {
                         $changes['updated'][] = [$id, $class];
@@ -169,7 +169,7 @@ class MorphsToMany extends MorphToMany
         }
 
         $detach = $current->except($updatedKeys)->map(function($item) {
-            return [$item->{$this->oMorphId}, $item->{$this->oMorphType}];
+            return [$item->{$this->relatedPivotKey}, $item->{$this->relatedMorphType}];
         })->all();
 
         if ($detaching && count($detach) > 0) {
@@ -181,6 +181,15 @@ class MorphsToMany extends MorphToMany
         return $changes;
     }
 
+    /**
+     * Update an existing pivot record on the table.
+     *
+     * @param int       $id         Record identifier
+     * @param string    $class      Record type
+     * @param array     $attributes Custom attributes
+     *
+     * @return int
+     */
     public function updateExistingMorphPivot($id, $class, array $attributes)
     {
         if (in_array($this->updatedAt(), $this->pivotColumns)) {
@@ -188,18 +197,29 @@ class MorphsToMany extends MorphToMany
         }
 
         $updated = $this->newPivotQuery()
-                        ->where($this->oMorphId, $id)
-                        ->where($this->oMorphType, $class)
+                        ->where($this->relatedPivotKey, $id)
+                        ->where($this->relatedMorphType, $class)
                         ->update($this->castAttributes($attributes));
 
         return $updated;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function attach($id, array $attributes = [], $touch = true)
     {
         $this->newPivotStatement()->insert($this->formatAttachMorphRecords($this->parseIds($id), $attributes));
     }
 
+    /**
+     * Create an array of records to insert into the pivot table.
+     *
+     * @param array $ids        Array of ids and types
+     * @param array $attributes Custom attributes
+     *
+     * @return array            Formatted array
+     */
     protected function formatAttachMorphRecords($ids, array $attributes)
     {
         $records = [];
@@ -213,17 +233,29 @@ class MorphsToMany extends MorphToMany
         return $records;
     }
 
+    /**
+     * Create a full attachment record payload.
+     *
+     * @param array $value Array    containing id and type
+     * @param array $attributes     Custom attributes
+     * @param bool $hasTimestamps   Flag to determine timestamps existence
+     *
+     * @return array                Formatted array
+     */
     protected function formatAttachMorphRecord($value, $attributes, $hasTimestamps)
     {
         list($id, $class) = $value;
         $attributes = array_merge($attributes,$values[3] ?? $values['attributes'] ?? []);
 
         $record[$this->morphType] = $this->morphClass;
-        $record[$this->oMorphType] = $class;
+        $record[$this->relatedMorphType] = $class;
 
         return array_merge($this->baseAttachRecord($id, $hasTimestamps), $record, $this->castAttributes($attributes));
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function detach($ids = null, $touch = true)
     {
         $query = $this->newPivotQuery();
@@ -239,7 +271,9 @@ class MorphsToMany extends MorphToMany
             // TODO: Can be optimized by $class grouping
             foreach ($ids as $item) {
                 list($id, $class) = $item;
-                $results[] = $query->where($this->oMorphType, $class)->where($this->relatedPivotKey, $id)->delete();
+                $results[] = $query->where($this->relatedMorphType, $class)
+                                   ->where($this->relatedPivotKey, $id)
+                                   ->delete();
             }
         }
 
