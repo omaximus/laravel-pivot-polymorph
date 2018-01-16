@@ -79,9 +79,26 @@ class MorphsTo extends MorphToMany
 
         $models = [];
 
+        /**
+         * @var int $key
+         * @var BaseCollection $result
+         */
         foreach ($results as $key => $result) {
             $model = static::getMorphedModel($key);
             $modelResults = $model::whereIn($this->parentKey, $result->pluck($this->relatedPivotKey))->get()->all();
+
+            // Fill pivot table
+            /** @var Model $model */
+            foreach ($modelResults as $model) {
+                $key = $result->where($this->relatedPivotKey, $model->getKey()) // TODO: this should be rewritten
+                              ->where($this->relatedMorphType, $model->getMorphClass())
+                              ->first()->{$this->foreignPivotKey};
+                $model->setAttribute('pivot_' . $this->foreignPivotKey, $key);
+                $model->setAttribute('pivot_' . $this->morphType, $this->morphClass);
+                $model->setAttribute('pivot_' . $this->relatedPivotKey, $model->getKey());
+                $model->setAttribute('pivot_' . $this->relatedMorphType, $model->getMorphClass());
+            }
+
             $models = array_merge($models, $modelResults);
         }
 
@@ -91,7 +108,7 @@ class MorphsTo extends MorphToMany
             $models = $builder->eagerLoadRelations($models);
         }
 
-        return new BaseCollection($models);
+        return new Collection($models);
     }
 
     /**
@@ -278,5 +295,35 @@ class MorphsTo extends MorphToMany
         }
 
         return $results;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function initRelation(array $models, $relation)
+    {
+        foreach ($models as $model) {
+            $model->setRelation($relation, new Collection());
+        }
+
+        return $models;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function match(array $models, Collection $results, $relation)
+    {
+        $dictionary = $this->buildDictionary($results);
+
+        foreach ($models as $model) {
+            if (isset($dictionary[$key = $model->{$this->parentKey}])) {
+                $model->setRelation(
+                    $relation, new Collection($dictionary[$key])
+                );
+            }
+        }
+
+        return $models;
     }
 }
