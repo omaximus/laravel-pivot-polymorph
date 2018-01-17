@@ -326,4 +326,9 @@ class MorphsTo extends MorphToMany
 
         return $models;
     }
+
+    public function getRelationExistenceQuery(Builder $query, Builder $parentQuery, $columns = ['*'])
+    {
+        return parent::getRelationExistenceQuery($query->from($this->table), $parentQuery, $columns);
+    }
 }
