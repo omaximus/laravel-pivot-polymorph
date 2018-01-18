@@ -5,6 +5,7 @@ namespace Pisochek\PivotPolymorph\Relations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphPivot;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Query\Builder as BaseBuilder;
 use Illuminate\Support\Collection as BaseCollection;
@@ -44,6 +45,7 @@ class MorphsTo extends MorphToMany
             $query, $parent, $name, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey
         );
 
+        $this->related = new MorphPivot();
         $this->relatedMorphType = $relatedType;
         $this->pivotColumns = [$foreignPivotKey, $relatedPivotKey, $type, $relatedType];
     }
@@ -71,35 +73,36 @@ class MorphsTo extends MorphToMany
     {
         $columns = $this->query->getQuery()->columns ? [] : $columns;
         $builder = $this->query->applyScopes();
-        $results = $builder->addSelect($this->shouldSelect($columns))
-                           ->getQuery()
-                           ->from($this->table)
-                           ->get()
-                           ->groupBy($this->relatedMorphType);
+        $groupedResults = $builder->addSelect($this->shouldSelect($columns))
+                                  ->getQuery()
+                                  ->from($this->table)
+                                  ->get()
+                                  ->groupBy($this->relatedMorphType);
 
         $models = [];
 
         /**
          * @var int $key
-         * @var BaseCollection $result
+         * @var BaseCollection $results
          */
-        foreach ($results as $key => $result) {
+        foreach ($groupedResults as $key => $results) {
             $model = static::getMorphedModel($key);
-            $modelResults = $model::whereIn($this->parentKey, $result->pluck($this->relatedPivotKey))->get()->all();
+            /** @var Collection $modelResults */
+            $modelResults = $model::whereIn($this->parentKey, $results->pluck($this->relatedPivotKey))->get();
 
             // Fill pivot table
-            /** @var Model $model */
-            foreach ($modelResults as $model) {
-                $key = $result->where($this->relatedPivotKey, $model->getKey()) // TODO: this should be rewritten
-                              ->where($this->relatedMorphType, $model->getMorphClass())
-                              ->first()->{$this->foreignPivotKey};
-                $model->setAttribute('pivot_' . $this->foreignPivotKey, $key);
-                $model->setAttribute('pivot_' . $this->morphType, $this->morphClass);
-                $model->setAttribute('pivot_' . $this->relatedPivotKey, $model->getKey());
-                $model->setAttribute('pivot_' . $this->relatedMorphType, $model->getMorphClass());
-            }
+            foreach ($results as $result) {
+                /** @var Model $foundModel */
+                $foundModel = $modelResults->where($this->parentKey, $result->{$this->relatedPivotKey})->first();
 
-            $models = array_merge($models, $modelResults);
+                $foundModel->setAttribute('pivot_' . $this->foreignPivotKey, $result->{$this->foreignPivotKey});
+                $foundModel->setAttribute('pivot_' . $this->morphType, $this->morphClass);
+                $foundModel->setAttribute('pivot_' . $this->relatedPivotKey, $foundModel->getKey());
+                $foundModel->setAttribute('pivot_' . $this->relatedMorphType, $foundModel->getMorphClass());
+
+                // Clone to avoid same relation objects
+                array_push($models, clone $foundModel);
+            }
         }
 
         $this->hydratePivotRelation($models);
@@ -278,7 +281,7 @@ class MorphsTo extends MorphToMany
         $query = $this->newPivotQuery();
         $results = [];
 
-        if (! is_null($ids)) {
+        if (!is_null($ids)) {
             $ids = $this->parseIds($ids);
 
             if (empty($ids)) {
@@ -292,6 +295,8 @@ class MorphsTo extends MorphToMany
                                    ->where($this->relatedPivotKey, $id)
                                    ->delete();
             }
+        } else {
+            $results[] = $query->delete();
         }
 
         return $results;
