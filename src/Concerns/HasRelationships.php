@@ -2,9 +2,11 @@
 
 namespace Pisochek\PivotPolymorph\Concerns;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasRelationships as IlluminateHasRelationships;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Pisochek\PivotPolymorph\Relations\MorphsOne;
+use Pisochek\PivotPolymorph\Relations\BelongsToMany;
 use Pisochek\PivotPolymorph\Relations\MorphsTo;
 use Pisochek\PivotPolymorph\Relations\MorphsToMany;
 
@@ -75,5 +77,11 @@ trait HasRelationships
             $instance->newQuery(), $this, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type,
             $relatedType, $parentKey ?: $this->getKeyName(), $relatedKey ?: $instance->getKeyName()
         );
+    }
+
+    protected function newBelongsToMany(Builder $query, Model $parent, $table, $foreignPivotKey, $relatedPivotKey,
+        $parentKey, $relatedKey, $relationName = null)
+    {
+        return new BelongsToMany($query, $parent, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey, $relationName);
     }
 }
