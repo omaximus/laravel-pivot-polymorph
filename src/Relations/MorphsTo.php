@@ -95,13 +95,15 @@ class MorphsTo extends MorphToMany
                 /** @var Model $foundModel */
                 $foundModel = $modelResults->where($this->parentKey, $result->{$this->relatedPivotKey})->first();
 
-                $foundModel->setAttribute('pivot_' . $this->foreignPivotKey, $result->{$this->foreignPivotKey});
-                $foundModel->setAttribute('pivot_' . $this->morphType, $this->morphClass);
-                $foundModel->setAttribute('pivot_' . $this->relatedPivotKey, $foundModel->getKey());
-                $foundModel->setAttribute('pivot_' . $this->relatedMorphType, $foundModel->getMorphClass());
+                if ($foundModel) {
+                    $foundModel->setAttribute('pivot_' . $this->foreignPivotKey, $result->{$this->foreignPivotKey});
+                    $foundModel->setAttribute('pivot_' . $this->morphType, $this->morphClass);
+                    $foundModel->setAttribute('pivot_' . $this->relatedPivotKey, $foundModel->getKey());
+                    $foundModel->setAttribute('pivot_' . $this->relatedMorphType, $foundModel->getMorphClass());
 
-                // Clone to avoid same relation objects
-                array_push($models, clone $foundModel);
+                    // Clone to avoid same relation objects
+                    array_push($models, clone $foundModel);
+                }
             }
         }
 
