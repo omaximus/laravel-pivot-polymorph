@@ -36,8 +36,16 @@ class MorphsTo extends MorphToMany
      * @internal param string $foreignPivotKey
      */
     public function __construct(
-        Model $parent, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey,
-        $type, $relatedType, $parentKey, $relatedKey
+        Model $parent,
+        $name,
+        $relatedName,
+        $table,
+        $foreignPivotKey,
+        $relatedPivotKey,
+        $type,
+        $relatedType,
+        $parentKey,
+        $relatedKey
     ) {
         $query = new Builder(new BaseBuilder($parent->getConnection()));
 
@@ -132,7 +140,7 @@ class MorphsTo extends MorphToMany
         }
 
         if ($value instanceof BaseCollection) {
-            return $value->map(function($model) {
+            return $value->map(function ($model) {
                 if ($model instanceof Model) {
                     return [$model->getKey(), $model->getMorphClass()];
                 } else {
@@ -190,7 +198,7 @@ class MorphsTo extends MorphToMany
             }
         }
 
-        $detach = $current->except($updatedKeys)->map(function($item) {
+        $detach = $current->except($updatedKeys)->map(function ($item) {
             return [$item->{$this->relatedPivotKey}, $item->{$this->relatedMorphType}];
         })->all();
 
@@ -206,9 +214,9 @@ class MorphsTo extends MorphToMany
     /**
      * Update an existing pivot record on the table.
      *
-     * @param int       $id         Record identifier
-     * @param string    $class      Record type
-     * @param array     $attributes Custom attributes
+     * @param int $id Record identifier
+     * @param string $class Record type
+     * @param array $attributes Custom attributes
      *
      * @return int
      */
@@ -237,7 +245,7 @@ class MorphsTo extends MorphToMany
     /**
      * Create an array of records to insert into the pivot table.
      *
-     * @param array $ids        Array of ids and types
+     * @param array $ids Array of ids and types
      * @param array $attributes Custom attributes
      *
      * @return array            Formatted array
@@ -259,15 +267,15 @@ class MorphsTo extends MorphToMany
      * Create a full attachment record payload.
      *
      * @param array $value Array    containing id and type
-     * @param array $attributes     Custom attributes
-     * @param bool $hasTimestamps   Flag to determine timestamps existence
+     * @param array $attributes Custom attributes
+     * @param bool $hasTimestamps Flag to determine timestamps existence
      *
      * @return array                Formatted array
      */
     protected function formatAttachMorphRecord($value, $attributes, $hasTimestamps)
     {
         list($id, $class) = $value;
-        $attributes = array_merge($attributes,$values[3] ?? $values['attributes'] ?? []);
+        $attributes = array_merge($attributes, $values[3] ?? $values['attributes'] ?? []);
 
         $record[$this->morphType] = $this->morphClass;
         $record[$this->relatedMorphType] = $class;

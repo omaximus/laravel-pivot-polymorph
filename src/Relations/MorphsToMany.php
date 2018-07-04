@@ -41,8 +41,17 @@ class MorphsToMany extends MorphToMany
      * @internal param string $foreignPivotKey
      */
     public function __construct(
-        Builder $query, Model $parent, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type,
-        $relatedType, $parentKey, $relatedKey
+        Builder $query,
+        Model $parent,
+        $name,
+        $relatedName,
+        $table,
+        $foreignPivotKey,
+        $relatedPivotKey,
+        $type,
+        $relatedType,
+        $parentKey,
+        $relatedKey
     ) {
         $this->relatedMorphType = $relatedType;
         $this->relatedMorphClass = $query->getModel()->getMorphClass();

@@ -50,7 +50,7 @@ class MorphsToManyPivot extends MorphPivot
     /**
      * Set the morph type for the related in pivot.
      *
-     * @param  string  $morphType
+     * @param  string $morphType
      * @return $this
      */
     public function setOtherMorphType($morphType)
@@ -63,7 +63,7 @@ class MorphsToManyPivot extends MorphPivot
     /**
      * Set the morph class for the related in pivot.
      *
-     * @param  string  $morphClass
+     * @param  string $morphClass
      * @return \Illuminate\Database\Eloquent\Relations\MorphPivot
      */
     public function setOtherMorphClass($morphClass)

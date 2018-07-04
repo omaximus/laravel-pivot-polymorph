@@ -46,7 +46,7 @@ class BelongsToMany extends IlluminateBelongsToMany
     protected function fireEvent(string $name, ...$parameters)
     {
         if ($this->events[$name]) {
-             event(new $this->events[$name]($this->getParent(), $parameters));
+            event(new $this->events[$name]($this->getParent(), $parameters));
         }
     }
 }
