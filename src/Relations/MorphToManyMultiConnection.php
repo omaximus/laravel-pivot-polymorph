@@ -85,9 +85,7 @@ class MorphToManyMultiConnection extends BelongsToManyMultiConnection
      */
     public function addEagerConstraints(array $models)
     {
-        parent::addEagerConstraints($models);
-
-        $this->query->where($this->table . '.' . $this->morphType, $this->morphClass);
+        return;
     }
 
     /**
