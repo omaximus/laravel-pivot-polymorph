@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphPivot;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Query\Builder as BaseBuilder;
 use Illuminate\Support\Collection as BaseCollection;
 
@@ -239,7 +238,9 @@ class MorphsTo extends MorphToMany
      */
     public function attach($id, array $attributes = [], $touch = true)
     {
+        $this->fireEvent('attaching', $id, $attributes);
         $this->newPivotStatement()->insert($this->formatAttachMorphRecords($this->parseIds($id), $attributes));
+        $this->fireEvent('attached', $id, $attributes);
     }
 
     /**
@@ -288,6 +289,7 @@ class MorphsTo extends MorphToMany
      */
     public function detach($ids = null, $touch = true)
     {
+        $this->fireEvent('detaching', $ids);
         $query = $this->newPivotQuery();
         $results = [];
 
@@ -308,6 +310,8 @@ class MorphsTo extends MorphToMany
         } else {
             $results[] = $query->delete();
         }
+
+        $this->fireEvent('detached', $ids);
 
         return $results;
     }
