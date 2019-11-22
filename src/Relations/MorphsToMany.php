@@ -57,7 +57,16 @@ class MorphsToMany extends MorphToMany
         $this->relatedMorphClass = $query->getModel()->getMorphClass();
 
         parent::__construct(
-            $query, $parent, $name, $table, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey, null, false
+            $query,
+            $parent,
+            $name,
+            $table,
+            $foreignPivotKey,
+            $relatedPivotKey,
+            $parentKey,
+            $relatedKey,
+            null,
+            false
         );
     }
 

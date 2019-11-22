@@ -3,6 +3,7 @@
 namespace Pisochek\PivotPolymorph\Relations;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany as IlluminateBelongsToMany;
+use Illuminate\Support\Arr;
 
 class BelongsToMany extends IlluminateBelongsToMany
 {
@@ -38,7 +39,7 @@ class BelongsToMany extends IlluminateBelongsToMany
 
     public function events(array $events)
     {
-        $this->events = array_only(array_merge($this->events, $events), array_keys($this->events));
+        $this->events = Arr::only(array_merge($this->events, $events), array_keys($this->events));
 
         return $this;
     }
