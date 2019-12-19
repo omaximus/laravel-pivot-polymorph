@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphPivot;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as BaseBuilder;
 use Illuminate\Support\Collection as BaseCollection;
 
@@ -17,6 +18,13 @@ class MorphsTo extends MorphToMany
      * @var string
      */
     protected $relatedMorphType;
+
+    /**
+     * True if we need to get softDeleted models.
+     *
+     * @var bool
+     */
+    protected $withTrashed;
 
     /**
      * Create a new morph to many relationship instance.
@@ -31,6 +39,7 @@ class MorphsTo extends MorphToMany
      * @param null|string $relatedType
      * @param string $parentKey
      * @param string $relatedKey
+     * @param bool $withTrashed
      * @internal param string $relatedPivotKey
      * @internal param string $foreignPivotKey
      */
@@ -44,7 +53,8 @@ class MorphsTo extends MorphToMany
         $type,
         $relatedType,
         $parentKey,
-        $relatedKey
+        $relatedKey,
+        $withTrashed = false
     ) {
         $query = new Builder(new BaseBuilder($parent->getConnection()));
 
@@ -55,6 +65,7 @@ class MorphsTo extends MorphToMany
         $this->related = new MorphPivot();
         $this->relatedMorphType = $relatedType;
         $this->pivotColumns = [$foreignPivotKey, $relatedPivotKey, $type, $relatedType];
+        $this->withTrashed = $withTrashed;
     }
 
     /**
@@ -93,9 +104,18 @@ class MorphsTo extends MorphToMany
          * @var BaseCollection $results
          */
         foreach ($groupedResults as $key => $results) {
+            /** @var Model $model */
             $model = static::getMorphedModel($key);
+
+            /** @var \Illuminate\Database\Query\Builder $modelQuery */
+            $modelQuery = $model::whereIn($this->parentKey, $results->pluck($this->relatedPivotKey));
+
+            if (in_array(SoftDeletes::class, class_uses($model)) && $this->withTrashed === true) {
+                $modelQuery->withTrashed();
+            }
+
             /** @var Collection $modelResults */
-            $modelResults = $model::whereIn($this->parentKey, $results->pluck($this->relatedPivotKey))->get();
+            $modelResults = $modelQuery->get();
 
             // Fill pivot table
             foreach ($results as $result) {
