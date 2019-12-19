@@ -27,6 +27,7 @@ trait HasRelationships
      * @param null $relatedPivotKey
      * @param null $parentKey
      * @param null $relatedKey
+     * @param bool $withTrashed
      *
      * @return \Pisochek\PivotPolymorph\Relations\MorphsTo
      */
@@ -39,7 +40,8 @@ trait HasRelationships
         $parentKey = null,
         $type = null,
         $relatedType = null,
-        $relatedKey = null
+        $relatedKey = null,
+        $withTrashed = false
     ) {
         list($relatedType, $relatedPivotKey) = $this->getMorphs(
             Str::snake($relatedName), $relatedType, $relatedPivotKey
@@ -48,7 +50,7 @@ trait HasRelationships
 
         return new MorphsTo(
             $this, $name, $relatedName, $table, $foreignPivotKey, $relatedPivotKey, $type, $relatedType,
-            $parentKey ?: $this->getKeyName(), $relatedKey ?: 'id'
+            $parentKey ?: $this->getKeyName(), $relatedKey ?: 'id', $withTrashed
         );
     }
 
