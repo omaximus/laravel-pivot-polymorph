@@ -120,9 +120,11 @@ trait HasRelationships
     ) {
         $foreignPivotKey = $foreignPivotKey ?: $this->getForeignKey();
 
-        // For the inverse of the polymorphic many-to-many relations, we will change
-        // the way we determine the foreign and other keys, as it is the opposite
-        // of the morph-to-many method since we're figuring out these inverses.
+        /**
+         * For the inverse of the polymorphic many-to-many relations, we will change
+         * the way we determine the foreign and other keys, as it is the opposite
+         * of the morph-to-many method since we're figuring out these inverses.
+         */
         $relatedPivotKey = $relatedPivotKey ?: $name . '_id';
 
         return $this->morphToManyMultiConnection(
@@ -156,18 +158,22 @@ trait HasRelationships
     ) {
         $caller = $this->guessBelongsToManyRelation();
 
-        // First, we will need to determine the foreign key and "other key" for the
-        // relationship. Once we have determined the keys we will make the query
-        // instances, as well as the relationship instances we need for these.
+        /**
+         * First, we will need to determine the foreign key and "other key" for the
+         * relationship. Once we have determined the keys we will make the query
+         * instances, as well as the relationship instances we need for these.
+         */
         $instance = $this->newRelatedInstance($related);
 
         $foreignPivotKey = $foreignPivotKey ?: $name . '_id';
 
         $relatedPivotKey = $relatedPivotKey ?: $instance->getForeignKey();
 
-        // Now we're ready to create a new query builder for this related model and
-        // the relationship instances for this relation. This relations will set
-        // appropriate query constraints then entirely manages the hydrations.
+        /**
+         * Now we're ready to create a new query builder for this related model and
+         * the relationship instances for this relation. This relations will set
+         * appropriate query constraints then entirely manages the hydrations.
+         */
         $table = $table ?: Str::plural($name);
 
         return $this->newMorphToManyMultiConnection(
