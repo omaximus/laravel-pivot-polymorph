@@ -98,7 +98,9 @@ class MorphsToMany extends MorphToMany
     protected function baseAttachRecord($id, $timed)
     {
         return Arr::add(
-            parent::baseAttachRecord($id, $timed), $this->relatedMorphType, $this->relatedMorphClass
+            parent::baseAttachRecord($id, $timed),
+            $this->relatedMorphType,
+            $this->relatedMorphClass
         );
     }
 
@@ -108,13 +110,13 @@ class MorphsToMany extends MorphToMany
     public function getRelationExistenceQuery(Builder $query, Builder $parentQuery, $columns = ['*'])
     {
         return parent::getRelationExistenceQuery($query, $parentQuery, $columns)
-                     ->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
+            ->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function newPivotQuery()
+    public function newPivotQuery()
     {
         return parent::newPivotQuery()->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
     }
@@ -130,10 +132,10 @@ class MorphsToMany extends MorphToMany
             : MorphsToManyPivot::fromAttributes($this->parent, $attributes, $this->table, $exists);
 
         $pivot->setPivotKeys($this->foreignPivotKey, $this->relatedPivotKey)
-              ->setOtherMorphType($this->relatedMorphType)
-              ->setOtherMorphClass($this->relatedMorphClass)
-              ->setMorphType($this->morphType)
-              ->setMorphClass($this->morphClass);
+            ->setOtherMorphType($this->relatedMorphType)
+            ->setOtherMorphClass($this->relatedMorphClass)
+            ->setMorphType($this->morphType)
+            ->setMorphClass($this->morphClass);
 
         return $pivot;
     }
