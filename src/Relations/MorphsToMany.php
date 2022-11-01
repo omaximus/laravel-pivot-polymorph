@@ -114,7 +114,7 @@ class MorphsToMany extends MorphToMany
     /**
      * {@inheritdoc}
      */
-    protected function newPivotQuery()
+    public function newPivotQuery()
     {
         return parent::newPivotQuery()->where($this->table . '.' . $this->relatedMorphType, $this->relatedMorphClass);
     }
