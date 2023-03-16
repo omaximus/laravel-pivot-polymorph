@@ -28,7 +28,7 @@ class MorphsToManyPivot extends MorphPivot
     /**
      * {@inheritdoc}
      */
-    protected function setKeysForSaveQuery(Builder $query)
+    protected function setKeysForSaveQuery($query)
     {
         $query->where($this->relatedMorphType, $this->relatedMorphClass);
 
